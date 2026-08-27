@@ -1,0 +1,58 @@
+// Esquema de datos — PostgreSQL vía Prisma.
+// Dominio relacional: una promoción se asocia a un producto O a una categoría.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum PromotionStatus {
+  PROGRAMADA
+  ACTIVA
+  FINALIZADA
+}
+
+model Product {
+  id         Int         @id @default(autoincrement())
+  name       String
+  promotions Promotion[]
+
+  @@map("products")
+}
+
+model Category {
+  id         Int         @id @default(autoincrement())
+  name       String
+  promotions Promotion[]
+
+  @@map("categories")
+}
+
+model Promotion {
+  id            Int             @id @default(autoincrement())
+  name          String
+  discountType  DiscountType    @map("discount_type")
+  discountValue Decimal         @map("discount_value") @db.Decimal(10, 2)
+  startDate     DateTime        @map("start_date") @db.Date
+  endDate       DateTime        @map("end_date") @db.Date
+  status        PromotionStatus @default(PROGRAMADA)
+
+  productId  Int?      @map("product_id")
+  product    Product?  @relation(fields: [productId], references: [id])
+  categoryId Int?      @map("category_id")
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("promotions")
+}
