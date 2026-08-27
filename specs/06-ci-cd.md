@@ -55,6 +55,7 @@ para que el job `smoke` reutilice con `--no-build` las imágenes cargadas del ar
 | Prueba | Resultado |
 |--------|-----------|
 | `actionlint` (Docker) sobre el workflow | ✅ sin errores (exit 0) |
+| Versiones de actions actualizadas (checkout@v7, setup-node@v7, upload-artifact@v7, download-artifact@v8, Node 24) | ✅ sin warning de Node 20 |
 | Simulación local: `docker build` de ambas imágenes | ✅ |
 | `docker save` + `docker compose up -d --no-build` | ✅ backend `Healthy` |
 | `curl /health` | ✅ `200` a la primera |
