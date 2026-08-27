@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+echo "→ Aplicando migraciones de base de datos..."
+npx prisma migrate deploy
+
+echo "→ Ejecutando seed (idempotente)..."
+npx prisma db seed || echo "  (seed omitido)"
+
+echo "→ Iniciando servidor..."
+exec node dist/index.js
