@@ -4,6 +4,7 @@ import type {
   DiscountType,
   NamedEntity,
 } from '../types';
+import { PlusIcon } from './icons';
 
 interface Props {
   products: NamedEntity[];
@@ -75,90 +76,96 @@ export function PromotionForm({ products, categories, onCreate }: Props) {
   }
 
   return (
-    <form className="promo-form" onSubmit={handleSubmit}>
-      <h2>Nueva promoción</h2>
-
-      <label>
-        Nombre
-        <input
-          type="text"
-          value={f.name}
-          onChange={(e) => set({ name: e.target.value })}
-          placeholder="Ej. Descuento de verano"
-        />
-      </label>
-
-      <div className="row">
-        <label>
-          Asociar a
-          <select
-            value={f.targetKind}
-            onChange={(e) => set({ targetKind: e.target.value as TargetKind, targetId: '' })}
-          >
-            <option value="product">Producto</option>
-            <option value="category">Categoría</option>
-          </select>
-        </label>
-        <label>
-          {f.targetKind === 'product' ? 'Producto' : 'Categoría'}
-          <select value={f.targetId} onChange={(e) => set({ targetId: e.target.value })}>
-            <option value="">— Selecciona —</option>
-            {options.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.name}
-              </option>
-            ))}
-          </select>
-        </label>
+    <form className="card promo-form" onSubmit={handleSubmit}>
+      <div className="card-header">
+        <h2>Nueva promoción</h2>
+        <p>Configura un descuento y su vigencia.</p>
       </div>
 
-      <div className="row">
-        <label>
-          Tipo de descuento
-          <select
-            value={f.discountType}
-            onChange={(e) => set({ discountType: e.target.value as DiscountType })}
-          >
-            <option value="PERCENTAGE">Porcentaje (%)</option>
-            <option value="FIXED">Monto fijo ($)</option>
-          </select>
-        </label>
-        <label>
-          Valor
+      <div className="card-body">
+        <label className="field">
+          <span>Nombre</span>
           <input
-            type="number"
-            step="0.01"
-            min="0"
-            value={f.discountValue}
-            onChange={(e) => set({ discountValue: e.target.value })}
+            type="text"
+            value={f.name}
+            onChange={(e) => set({ name: e.target.value })}
+            placeholder="Ej. Descuento de verano"
           />
         </label>
+
+        <div className="row">
+          <label className="field">
+            <span>Asociar a</span>
+            <select
+              value={f.targetKind}
+              onChange={(e) => set({ targetKind: e.target.value as TargetKind, targetId: '' })}
+            >
+              <option value="product">Producto</option>
+              <option value="category">Categoría</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>{f.targetKind === 'product' ? 'Producto' : 'Categoría'}</span>
+            <select value={f.targetId} onChange={(e) => set({ targetId: e.target.value })}>
+              <option value="">— Selecciona —</option>
+              {options.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="row">
+          <label className="field">
+            <span>Tipo de descuento</span>
+            <select
+              value={f.discountType}
+              onChange={(e) => set({ discountType: e.target.value as DiscountType })}
+            >
+              <option value="PERCENTAGE">Porcentaje (%)</option>
+              <option value="FIXED">Monto fijo ($)</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>Valor</span>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={f.discountValue}
+              onChange={(e) => set({ discountValue: e.target.value })}
+            />
+          </label>
+        </div>
+
+        <div className="row">
+          <label className="field">
+            <span>Fecha inicio</span>
+            <input
+              type="date"
+              value={f.startDate}
+              onChange={(e) => set({ startDate: e.target.value })}
+            />
+          </label>
+          <label className="field">
+            <span>Fecha fin</span>
+            <input
+              type="date"
+              value={f.endDate}
+              onChange={(e) => set({ endDate: e.target.value })}
+            />
+          </label>
+        </div>
+
+        {error && <p className="form-error">{error}</p>}
+
+        <button type="submit" className="btn-primary" disabled={submitting}>
+          <PlusIcon size={17} />
+          {submitting ? 'Guardando…' : 'Crear promoción'}
+        </button>
       </div>
-
-      <div className="row">
-        <label>
-          Fecha inicio
-          <input
-            type="date"
-            value={f.startDate}
-            onChange={(e) => set({ startDate: e.target.value })}
-          />
-        </label>
-        <label>
-          Fecha fin
-          <input
-            type="date"
-            value={f.endDate}
-            onChange={(e) => set({ endDate: e.target.value })}
-          />
-        </label>
-      </div>
-
-      {error && <p className="form-error">{error}</p>}
-
-      <button type="submit" className="btn-primary" disabled={submitting}>
-        {submitting ? 'Guardando…' : 'Crear promoción'}
-      </button>
     </form>
   );
 }

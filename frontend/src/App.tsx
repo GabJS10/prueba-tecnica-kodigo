@@ -5,6 +5,7 @@ import { SummaryCards } from './components/SummaryCards';
 import { PromotionForm } from './components/PromotionForm';
 import { PromotionList } from './components/PromotionList';
 import { NEXT_STATUS } from './constants';
+import { TagIcon } from './components/icons';
 
 export function App() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -12,6 +13,7 @@ export function App() {
   const [products, setProducts] = useState<NamedEntity[]>([]);
   const [categories, setCategories] = useState<NamedEntity[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
@@ -21,6 +23,8 @@ export function App() {
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo cargar la información.');
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -57,26 +61,44 @@ export function App() {
   };
 
   return (
-    <main className="container">
-      <header>
-        <h1>Gestión de Promociones</h1>
+    <>
+      <header className="topbar">
+        <div className="topbar-inner">
+          <span className="topbar-logo">
+            <TagIcon size={22} />
+          </span>
+          <div>
+            <h1 className="topbar-title">Gestión de Promociones</h1>
+            <p className="topbar-subtitle">Panel de administración · Kódigo Fuente</p>
+          </div>
+        </div>
       </header>
 
-      {error && <p className="banner-error">{error}</p>}
+      <main className="container">
+        {error && <p className="banner-error">{error}</p>}
 
-      <SummaryCards summary={summary} />
+        <SummaryCards summary={summary} />
 
-      <div className="layout">
-        <PromotionForm products={products} categories={categories} onCreate={handleCreate} />
-        <section className="list-section">
-          <h2>Promociones</h2>
-          <PromotionList
-            promotions={promotions}
-            onAdvance={handleAdvance}
-            onDelete={handleDelete}
-          />
-        </section>
-      </div>
-    </main>
+        <div className="layout">
+          <PromotionForm products={products} categories={categories} onCreate={handleCreate} />
+
+          <section className="card list-section">
+            <div className="card-header">
+              <h2>Promociones</h2>
+              {!loading && <span className="count-pill">{promotions.length}</span>}
+            </div>
+            {loading ? (
+              <p className="loading">Cargando promociones…</p>
+            ) : (
+              <PromotionList
+                promotions={promotions}
+                onAdvance={handleAdvance}
+                onDelete={handleDelete}
+              />
+            )}
+          </section>
+        </div>
+      </main>
+    </>
   );
 }
