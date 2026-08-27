@@ -1,0 +1,142 @@
+name: CI
+
+# Se ejecuta en cada push a main y en cada pull request.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # 1) LINT — análisis estático de backend y frontend.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Lint backend
+        working-directory: backend
+        run: |
+          npm ci
+          npm run lint
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint
+
+  # 2) TEST — pruebas unitarias del backend (Prisma mockeado, sin base de datos).
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar y probar backend
+        working-directory: backend
+        run: |
+          npm ci
+          npx prisma generate
+          npm test
+
+  # 3) BUILD — construye las imágenes Docker UNA vez y las guarda como artefacto.
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir imagen del backend
+        run: docker build -t promociones-backend ./backend
+
+      - name: Construir imagen del frontend
+        run: docker build -t promociones-frontend --build-arg VITE_API_URL="${{ secrets.VITE_API_URL }}" ./frontend
+
+      - name: Guardar imágenes en un tar
+        run: docker save promociones-backend promociones-frontend -o images.tar
+
+      - name: Subir imágenes como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-images
+          path: images.tar
+          retention-days: 1
+
+  # 4) SMOKE — levanta todo el stack y comprueba /health.
+  smoke:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descargar imágenes construidas
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images
+
+      - name: Cargar imágenes en Docker
+        run: docker load -i images.tar
+
+      # Falla EXPLÍCITO si falta alguna variable requerida (requisito del spec).
+      - name: Verificar variables de entorno requeridas
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: |
+          for v in POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB DATABASE_URL VITE_API_URL; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Falta la variable de entorno requerida: $v"
+              exit 1
+            fi
+          done
+          echo "Todas las variables requeridas están presentes."
+
+      - name: Generar archivo .env desde los Secrets
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: |
+          {
+            echo "POSTGRES_USER=$POSTGRES_USER"
+            echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD"
+            echo "POSTGRES_DB=$POSTGRES_DB"
+            echo "DATABASE_URL=$DATABASE_URL"
+            echo "PORT=3000"
+            echo "VITE_API_URL=$VITE_API_URL"
+          } > .env
+
+      - name: Levantar el stack (sin reconstruir)
+        run: docker compose up -d --no-build
+
+      - name: Esperar a que /health responda 200
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health || true)
+            echo "Intento $i → HTTP $code"
+            if [ "$code" = "200" ]; then
+              echo "✅ /health respondió 200"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "::error::/health no respondió 200 a tiempo"
+          docker compose logs
+          exit 1
+
+      - name: Detener el stack
+        if: always()
+        run: docker compose down -v
