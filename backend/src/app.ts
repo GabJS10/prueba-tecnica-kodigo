@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { healthRouter } from './routes/health.js';
 import { promotionsRouter } from './routes/promotions.js';
+import { catalogRouter } from './routes/catalog.js';
 
 /**
  * Construye la app Express. Se exporta aparte de index.ts para poder
@@ -15,6 +16,7 @@ export function createApp() {
 
   app.use(healthRouter);
   app.use('/api/promotions', promotionsRouter);
+  app.use('/api', catalogRouter);
 
   return app;
 }
