@@ -6,16 +6,16 @@ elección aquí.
 
 ## Resumen del stack
 
-| Capa | Elección | Alternativas consideradas |
-|------|----------|---------------------------|
-| Frontend | React 19 + Vite 8 + TypeScript | (Obligatorio por el spec) |
-| Backend | Node.js + Express + TypeScript | Laravel, NestJS |
-| Base de datos | PostgreSQL 16 | MongoDB, SQL Server |
-| ORM | Prisma | Knex, `pg` a mano, TypeORM |
-| Validación | Zod | Joi, class-validator |
-| Testing | Vitest + Supertest | Jest |
-| Contenedores | Docker + Docker Compose | (Obligatorio por el spec) |
-| CI/CD | GitHub Actions | (Obligatorio por el spec) |
+| Capa          | Elección                       | Alternativas consideradas  |
+| ------------- | ------------------------------ | -------------------------- |
+| Frontend      | React 19 + Vite 8 + TypeScript | (Obligatorio por el spec)  |
+| Backend       | Node.js + Express + TypeScript | Laravel, NestJS            |
+| Base de datos | PostgreSQL 16                  | MongoDB, SQL Server        |
+| ORM           | Prisma                         | Knex, `pg` a mano, TypeORM |
+| Validación    | Zod                            | Joi, class-validator       |
+| Testing       | Vitest + Supertest             | Jest                       |
+| Contenedores  | Docker + Docker Compose        | (Obligatorio por el spec)  |
+| CI/CD         | GitHub Actions                 | (Obligatorio por el spec)  |
 
 ## Backend: Node.js + Express + TypeScript
 
@@ -63,7 +63,7 @@ elección aquí.
   flechas del spec y reforzada por sus reglas (`FINALIZADA` inmutable, borrado solo en
   `PROGRAMADA`). Se implementa en `domain/status.ts` y se valida en la capa de servicio.
 - **Regla "producto XOR categoría"** garantizada en el servicio (no se permite ninguno ni ambos).
-  Un `CHECK` a nivel de DB queda como mejora opcional.
+  Un `CHECK` a nivel de DB queda como mejora opcional (no vi necesaria la implementacion para esta prueba).
 - **Manejo de secretos**: nada sensible en el repo. `.env.example` sin valores, `.env` ignorado,
   y en CI las variables se inyectan desde **GitHub Secrets**; el pipeline y la app fallan de
   forma explícita si falta alguna (`config/env.ts` y un step de verificación en el smoke test).
